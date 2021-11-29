@@ -35,7 +35,7 @@ cell.pseudo = 'gth-pade' # this is a pseudopotential, which is like a set energy
 #cell.build() # constructs the entire crystal with all previous component parts
 
 
-# Rerence: https://github.com/pyscf/pyscf/blob/master/examples/pbc/09-talk_to_ase.py 
+# Reference: https://github.com/pyscf/pyscf/blob/master/examples/pbc/09-talk_to_ase.py 
 mf_class = pbcdft.RKS
 
 mf_dict = {'xc', 'lda,vwn'}
