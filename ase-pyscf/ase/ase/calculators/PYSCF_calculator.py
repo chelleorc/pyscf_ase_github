@@ -60,6 +60,7 @@ class PySCF(Calculator):
         if changed_parameters:
             self.reset()
 
+    # Call ASE base calculator and calculate energy
     def calculate(self, atoms=None, properties=['energy'],
                   system_changes=['positions', 'numbers', 'cell',
                                   'pbc', 'charges','magmoms']):
