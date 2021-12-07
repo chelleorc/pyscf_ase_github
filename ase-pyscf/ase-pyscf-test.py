@@ -4,48 +4,60 @@ Take ASE Diamond structure, input into PySCF and run
 
 import pyscf.pbc.gto as pbcgto
 import pyscf.pbc.dft as pbcdft
+from pyscf import lib, gto, scf, dft, mp, cc, ci
 
 from ase.calculators.PYSCF_calculator import ase_atoms_to_pyscf as pyscf_atom
 from ase.calculators.PYSCF_calculator import PySCF
 from ase.lattice.cubic import Diamond
+
+class parameters():
+    # holds the calculation mode and user-chosen attributes of post-HF objects
+    def __init__(self):
+        self.mode = 'hf'
+    def show(self):
+        print('------------------------')
+        print('calculation-specific parameters set by the user')
+        print('------------------------')
+        for v in vars(self):
+            print('{}:  {}'.format(v,vars(self)[v]))
+        print('\n\n')
 
 # Use cubic diamond structure from ASE and
 # calculate its volume
 ase_atom=Diamond(symbol='C', latticeconstant=3.5668)
 print(ase_atom.get_volume())
 
-'''
-# Convert ASE diamond into PySCF diamond
-diamond_shape = pyscf_atom(ase_atom)
-print(diamond_shape)
-'''
+
+### Build the structure ###
+    # Reference: https://github.com/pyscf/pyscf/blob/master/examples/pbc/09-talk_to_ase.py 
+molcell = pbcgto.Cell() # periodic boundary conditions, esp for crystals --> molcell
+molcell.verbose = 5
+molcell.a = ase_atom.cell # initialize crystal shape using lattice vectors  
+molcell.basis = 'gth-szv' # initialize basis
+molcell.pseudo = 'gth-pade' # initialize pseudopotential
 
 
-# Calculator PySCF energy
+### Set up calculation ###
+mf_class = pbcdft.RKS # --> mf_class
+mf_dict = {'xc':'lda,vwn'} # -->mf_dict
 
-# Note: This is what is suppose to occur in the PYSCF_calculator
-cell = pbcgto.Cell() # Modify cell object with periodic boundary conditions, esp for crystals
-cell.verbose = 5
+index = 4
 
-### This is a step-by-step way of building a crystal ###
-#cell.atom = diamond_shape # holds ase-turned-pyscf diamond
-cell.a = ase_atom.cell # .a initializes crystal shape using lattice vectors --> molcell 
-cell.basis = 'gth-szv' # a basis is a coordinate system (i.e. x-y coord.)
-cell.pseudo = 'gth-pade' # this is a pseudopotential, which is like a set energy for the crystal (since there are no interactions with other molecules, i.e. deformations)
-#cell.build() # constructs the entire crystal with all previous component parts
+mf_p = parameters()
+mf_p.mode = ['hf','mp2','cisd','ccsd','ccsd(t)'][index]
+mf_p.verbose = 5
+mf_p.show()
+
+molcell.verbose = mf_p.verbose
+
+args = {'molcell': molcell,'mf_class': mf_class, 'mf_dict': mf_dict,'mf_p': mf_p}
 
 
-# Reference: https://github.com/pyscf/pyscf/blob/master/examples/pbc/09-talk_to_ase.py 
-mf_class = pbcdft.RKS
 
-mf_dict = {'xc', 'lda,vwn'}
+### Call PySCF class for access to functions ###
+# calc = PySCF(molcell=molcell, mf_class=mf_class, mf_dict=mf_dict)
 
-# Call PySCF class for access to functions
-# Use calculate to build diamond and calculate diamond
-
-initialize_atom = ase_atom.set_calculator(PySCF.initialize(cell,mf_class,mf_dict)) # TypeError for mf_dict
-
-print(initialize_atom)
-
+calc = PySCF(**args)
+calc.calculate(atoms=ase_atom)
 
 
