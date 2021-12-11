@@ -6,7 +6,7 @@ electronic structure calculations.
 '''
 import numpy as np
 from ase.calculators.calculator import (Calculator, CalculatorError, 
-                    CalculatorSetupError, all_changes, all_properties,kpts2m)
+                    CalculatorSetupError, all_changes, all_properties, kpts2mp, FileIOCalculator)
 
 
 def ase_atoms_to_pyscf(ase_atoms):
@@ -42,19 +42,17 @@ class PySCF(Calculator):
         # This explicitly refers to "cell". How to refer
         # to both cell and mol together?
 
-        self.mf=None
         self.initialize(**kwargs)
 
 
     # Check if ASE molecule begins with A or a
-    def initialize(self, molcell, mf_class, mf_dict,mf_p=None):
+    def initialize(self, molcell, mf_class, mf_dict):
         if not molcell.unit.startswith(('A','a')):
             raise RuntimeError("PySCF unit must be A to work with ASE")
 
         self.molcell=molcell
         self.mf_class=mf_class
         self.mf_dict=mf_dict
-        self.mf_p=mf_p
 
 
     def set(self, **kwargs):
@@ -73,16 +71,40 @@ class PySCF(Calculator):
         calc_molcell.atom = ase_atoms_to_pyscf(atoms)
         calc_molcell.a = np.asarray(atoms.cell)
         calc_molcell.build(None,None)
-        self.mf = self.mf_class(calc_molcell)
-        
-        for key in self.mf_dict:
-            self.mf.__dict__[key] = self.mf_dict[key]
+        self.mf = self.mf_class(calc_molcell)       
 
         self.results['energy']=self.mf.scf()
 
 # K-point sampling
 def make_kpts(cell, nks):
     raise DeprecationWarning('Use cell.make_kpts(nks) instead.')
+
+
+
+class PySCFFileIO(FileIOCalculator):
+    """Base class for calculators that write/read input/output files."""
+
+    def __init__(self, restart=None,
+                 ignore_bad_restart_file=False,
+                 label='PySCF', atoms=None, command=None, **kwargs):
+        """File-IO calculator.
+
+        command: str
+            Command used to start calculation.
+        """
+        FileIOCalculator.__init__(self, restart, ignore_bad_restart_file, label,
+                            atoms,command, **kwargs)
+
+
+
+    def calculate(self, atoms=None, properties=['energy'],
+                  system_changes=['positions', 'numbers', 'cell',
+                                  'pbc', 'charges','magmoms']):
+
+        Calculator.calculate(self, atoms)
+        self.write_input(self.atoms)
+        self.execute()
+        self.read_results()
 
 
 
