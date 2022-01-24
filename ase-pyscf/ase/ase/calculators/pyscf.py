@@ -8,7 +8,8 @@ import numpy as np
 from ase.calculators.calculator import (Calculator, CalculatorError, 
                     CalculatorSetupError, all_changes, all_properties, kpts2mp, FileIOCalculator)
 
-# Convert ase atoms to pyscf atoms
+
+
 def ase_atoms_to_pyscf(ase_atoms):
     return [[atom.symbol, atom.position] for atom in ase_atoms]
 

@@ -5,11 +5,11 @@ Take ASE Diamond structure, input into PySCF and run
 import numpy as np
 import pyscf.pbc.gto as pbcgto
 import pyscf.pbc.dft as pbcdft
-
+import pyscf.pbc.scf as scf
 
 from ase.calculators.pyscf import PySCF
 from ase.units import kJ
-from ase.utils.eos import EquationOfState
+from ase.eos import EquationOfState
 from ase.lattice.cubic import Diamond
 
 
@@ -24,11 +24,11 @@ molcell.a = ase_atom.cell # initialize crystal shape using lattice vectors
 molcell.basis = 'gth-szv' 
 molcell.pseudo = 'gth-pade'
 
-# Set up calculation 
+### Set up calculation ###
 mf_class = pbcdft.RKS
 mf_dict = {'xc':'lda,vwn'}
 args = {'molcell': molcell,'mf_class': mf_class, 'mf_dict': mf_dict}
 
-# Pass args to pyscf calculator and calculate energy
+# Pass args and calculate energy
 calc = PySCF(**args)
 calc.calculate(atoms=ase_atom)
